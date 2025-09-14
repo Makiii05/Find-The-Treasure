@@ -63,6 +63,7 @@ const retryRoundEl = document.getElementById("retry-round");
 const retryLifeEl = document.getElementById("retry-life");
 
 // Button elements
+const allBtn = document.querySelectorAll("button");
 const startBtn = document.getElementById("start-btn");
 const restartBtn = document.getElementById("restart-btn");
 const nextRoundBtn = document.getElementById("next-round-btn");
@@ -90,6 +91,7 @@ const extraLifeSound = new Audio("mp3/1up.mp3");
 const coinSound = new Audio("mp3/coin.mp3");
 const gameOverSound = new Audio("mp3/game_over.mp3");
 const wrongSound = new Audio("mp3/wrong.mp3");
+const onHoverSound = new Audio("mp3/onhover.wav");
 
 // ---- GAME STATE VARIABLES ----
 
@@ -114,8 +116,8 @@ let treasureCount = 2;
 // Game status flags
 let isGuessed = false;
 let boxCount = 9;
-let world1 = 5;      // Round threshold for world 2
-let world2 = 10;     // Round threshold for world 3
+let world1 = 5;
+let world2 = 10;
 let gameInProgress = false;
 
 // ================================================================================
@@ -157,6 +159,7 @@ function main() {
     // Start menu music
     stopBGM();
     playMenuSound();
+    onHoverSFX();
 }
 
 // Menu function - Returns to main menu and resets everything
@@ -342,7 +345,8 @@ function createCard() {
             card.setAttribute("clicked", "true");
             selection++;
             selectionEl.innerHTML = selection + '/' + maxSelection;
-
+            
+            setTimeout(() => {
             if (treasurePosition.includes(i)) {
                 card.style.backgroundImage = `url('images/coin.gif?${Date.now()}')`;
                 playCoinSound();
@@ -364,6 +368,8 @@ function createCard() {
 
             guessedPosition.push(i);
             if (selection >= maxSelection) checkEndRound();
+                
+            }, 100);
         }
     }
 }
@@ -527,6 +533,20 @@ function playWrongSound() {
     catch (e) { }
 }
 
+function playOnHoverSound() {
+    try { const s = onHoverSound.cloneNode(); s.play(); s.volume = 0.5; }
+    catch (e) { }
+}
+
+function onHoverSFX(){
+    for (let i = 0; i < allBtn.length; i++) {
+        allBtn[i].addEventListener("mouseover", () => {
+            playOnHoverSound();
+            console.log("hover");
+        });
+    }
+}
+
 // ---- VISUAL EFFECTS FUNCTIONS ----
 
 // Circle effect - Visual transition animation between worlds
@@ -619,17 +639,12 @@ function leaderboard(todo) {
             }
         }
     } else if (todo == "update") {
-        //check if current player has record && if current score is higher than recorded
-        for (let i = 0; i < localStorage.length; i++) {
-            let player = localStorage.key(i);
-            if (player == playerNameInput.value && scoreEl.innerHTML > localStorage.getItem(player)) {
-                //overwrite the data as the highest player's score
-                localStorage.setItem(playerNameInput.value, scoreEl.innerHTML);
-                return;
-            }
+        let existingScore = parseInt(localStorage.getItem(playerNameInput.value) || "0", 10);
+        let currentScore = parseInt(scoreEl.innerHTML, 10);
+
+        if(currentScore > existingScore){
+            localStorage.setItem(playerNameInput.value, currentScore);
         }
-        //if not yet recorded, just add
-        localStorage.setItem(playerNameInput.value, scoreEl.innerHTML);
     } else {
         //close
         leaderboardCon.classList.add("d-none");
